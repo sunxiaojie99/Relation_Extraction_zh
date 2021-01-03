@@ -1,12 +1,8 @@
-<<<<<<< HEAD
 datasets/
-complete_scripts/
 pretrained_models/chinese-bert-wwm/
 saved_models/
 .idea/
 
-
-=======
 # Build and Release Folders
 bin-debug/
 bin-release/
@@ -25,4 +21,3 @@ bin-release/
 # Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
->>>>>>> 499de3f352f33e3ad143bb79efeb4aaaf9df3872

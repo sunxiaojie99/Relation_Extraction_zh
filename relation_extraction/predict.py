@@ -63,7 +63,7 @@ def predict(hparams):
     is_add_entity_type = hparams.is_add_entity_type
     additional_tokens = get_additional_tokens(hparams.additional_tokens_file)
     special_type_file = hparams.special_type_file
-    
+
     idx2label = get_idx2label(label_set_file)
     hparams.label_set_size = len(idx2label)
     model = SentenceRE(hparams).to(device)  # model 和所有的tensor都要放到GPU上！
@@ -221,6 +221,14 @@ def predict_without_output(hparams, items):
         entity2 = item['object']
         entity2_type = item['obj_type']
         text = item['text']
+        try:
+            assert re.search(entity1, text) is not None, str(
+                entity1) + ' == ' + str(text)
+            assert re.search(entity2, text) is not None, str(
+                entity2) + ' == ' + str(text)
+        except Exception as e:
+            print(e)
+            continue
         match_obj1 = re.search(entity1, text)
         match_obj2 = re.search(entity2, text)
         if match_obj1 and match_obj2:
@@ -288,7 +296,7 @@ def predict_without_output(hparams, items):
     return res
 
 
-def predict_without_output_fixed_subj(hparams, items):
+def predict_without_output_fixed_subj(hparams, items, isprint=False):
     """
         api调用使用，给定头实体，不需要双向预测
         items: list, 其中的item包含：'text'、'subject'、'object'
@@ -332,6 +340,14 @@ def predict_without_output_fixed_subj(hparams, items):
         entity2 = item['object']
         entity2_type = item['obj_type']
         text = item['text']
+        try:
+            assert re.search(entity1, text) is not None, str(
+                entity1) + ' == ' + str(text)
+            assert re.search(entity2, text) is not None, str(
+                entity2) + ' == ' + str(text)
+        except Exception as e:
+            print(e)
+            continue
         match_obj1 = re.search(entity1, text)
         match_obj2 = re.search(entity2, text)
         if match_obj1 and match_obj2:
@@ -350,7 +366,8 @@ def predict_without_output_fixed_subj(hparams, items):
                 },
                 'text': text
             }
-            pre1 = do_predict(item_1, hparams, tokenizer, model, idx2label)
+            pre1 = do_predict(item_1, hparams, tokenizer,
+                              model, idx2label, isprint=isprint)
 
             if pre1['rel'] == 'no_relation':
                 continue

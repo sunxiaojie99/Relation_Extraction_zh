@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from sklearn import metrics
 
-from .data_utils import WikiData, get_idx2label, load_checkpoint, save_checkpoint
+from .data_utils import WikiData, get_idx2label, load_checkpoint, save_checkpoint, Mytokenizer, get_additional_tokens
 from .model import SentenceRE
 from .my_metrics import score
 
@@ -185,3 +185,95 @@ def train(hparams):
                 save_checkpoint(checkpoint_micro_dict, checkpoint_micro_file)
 
     writer.close()
+
+
+def evaluate(hparams):
+    """
+    evaluate trained_model in dev dataset
+    """
+    device = hparams.device
+    seed = hparams.seed
+    torch.manual_seed(seed)
+
+    pretrained_model_path = hparams.pretrained_model_path
+    validation_file = hparams.validation_file
+    label_set_file = hparams.label_set_file
+    additional_tokens_file = hparams.additional_tokens_file
+    model_file = hparams.model_file
+    not_need_label_file = hparams.not_need_label_file
+    special_type_file = hparams.special_type_file
+
+    max_len = hparams.max_len
+    validation_batch_size = hparams.validation_batch_size
+    is_add_entity_type = hparams.is_add_entity_type
+
+    idx2label = get_idx2label(label_set_file)
+    hparams.label_set_size = len(idx2label)
+
+    model = SentenceRE(hparams).to(device)  # model 和所有的tensor都要放到GPU上！
+    model.load_state_dict(torch.load(model_file, map_location=device))
+    validation_dataset = WikiData(data_file_path=validation_file, not_need_label_file=not_need_label_file,
+                                  labels_path=label_set_file, additional_file_path=additional_tokens_file,
+                                  pretrained_model_path=pretrained_model_path, max_len=max_len,
+                                  is_add_entity_type=is_add_entity_type, special_type_file=special_type_file)
+    val_loader = DataLoader(
+        validation_dataset, batch_size=validation_batch_size, shuffle=True)
+    model.eval()
+    with torch.no_grad():
+        labels_true = []
+        labels_pred = []
+        for i, sampled_batched in enumerate(tqdm(val_loader, desc='Validation')):
+            token_ids = sampled_batched['token_ids'].to(device)
+            token_type_ids = sampled_batched['token_type_ids'].to(
+                device)
+            attention_mask = sampled_batched['attention_mask'].to(
+                device)
+            e1_mask = sampled_batched['e1_mask'].to(device)
+            e2_mask = sampled_batched['e2_mask'].to(device)
+            label_ids = sampled_batched['label_id'].to(device)
+            logits = model(token_ids, token_type_ids,
+                           attention_mask, e1_mask, e2_mask)  # 和forward对应
+            # [batch_size, label_set_size]
+            pred_tag_ids = logits.argmax(1)
+            labels_true.extend(label_ids.tolist())  # 把tensor转为list
+            labels_pred.extend(pred_tag_ids.tolist())
+
+        # print('样本数', len(labels_true))
+        # localtime = time.asctime(time.localtime(time.time()))
+        # print("本地时间为 :", localtime)
+
+        print(metrics.classification_report(labels_true, labels_pred, labels=list(idx2label.keys()),
+                                            target_names=list(idx2label.values())))
+
+
+def test_tokenizer(hparams):
+    """
+    用于测试tokenizer
+    """
+    device = hparams.device
+    seed = hparams.seed
+    torch.manual_seed(seed)
+
+    pretrained_model_path = hparams.pretrained_model_path
+    label_set_file = hparams.label_set_file
+    model_file = hparams.model_file
+    special_type_file = hparams.special_type_file
+    additional_file_path = hparams.additional_tokens_file
+
+    is_add_entity_type = hparams.is_add_entity_type
+
+    idx2label = get_idx2label(label_set_file)
+    hparams.label_set_size = len(idx2label)
+
+    model = SentenceRE(hparams).to(device)  # model 和所有的tensor都要放到GPU上！
+    model.load_state_dict(torch.load(model_file, map_location=device))
+    tokenizer = Mytokenizer(pretrained_model_path=pretrained_model_path,
+                            mask_entity=False,
+                            is_add_entity_type=is_add_entity_type,
+                            additional_file_path=additional_file_path, special_type_file=special_type_file)
+
+    item = {"h": {"name": "叶莉", "pos": [22, 24], "type": "PERSON"}, "t": {"name": "姚明", "pos": [
+        9, 11], "type": "PERSON"}, "relation": "配偶", "text": "也是在2004年，姚明找到了人生的另一半，与叶莉在雅典奥运会闭幕式上高调牵手"}
+
+    c = tokenizer.tokenize(item)
+    print(c)

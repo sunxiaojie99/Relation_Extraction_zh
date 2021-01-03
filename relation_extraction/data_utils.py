@@ -127,14 +127,10 @@ class Mytokenizer(object):
                 len(sent0) + len(ent0) + len(sent1) + len(ent1)
             ]
 
-        re_tokens = ['[CLS]']
-        pos1 = [0, 0]  # 用于**记录加完tag后**，head实体的开始结束位置，也是左开右闭
-        pos2 = [0, 0]  # 用于记录加完tag后，tail实体的开始结束位置
-
         # 已经添加过了additional_special_tokens的标记，也可以不加tokenize
         if (h_type is not '') and (t_type is not '') and self.is_add_entity_type is True:  # 我们自己加的，在词表中没有的
             before_head = self.bert_tokenizer.tokenize(
-                '<' + 'H-' + h_type + '>')
+                '<' + 'H-' + h_type + '>')  # 也是个list
             before_tail = self.bert_tokenizer.tokenize(
                 '<' + 'T-' + t_type + '>')
             after_head = self.bert_tokenizer.tokenize(
@@ -142,19 +138,23 @@ class Mytokenizer(object):
             after_tail = self.bert_tokenizer.tokenize(
                 '<' + '/' + 'T-' + t_type + '>')
         else:
-            before_head = '[unused1]'
-            before_tail = '[unused2]'
-            after_head = '[unused3]'
-            after_tail = '[unused4]'
+            before_head = ['[unused1]']  # 因为后面是extend，要加个[]，否则会变成字符
+            before_tail = ['[unused2]']
+            after_head = ['[unused3]']
+            after_tail = ['[unused4]']
 
         # 处理特殊标记，eg，JOB、NP
         if h_type in self.special_type:
-            before_head = '[unused1]'
-            after_head = '[unused3]'
+            before_head = ['[unused1]']
+            after_head = ['[unused3]']
 
         if t_type in self.special_type:
-            before_tail = '[unused2]'
-            after_tail = '[unused4]'
+            before_tail = ['[unused2]']
+            after_tail = ['[unused4]']
+
+        re_tokens = ['[CLS]']  # 模拟encode后的tokens
+        pos1 = [0, 0]  # 用于**记录加完tag后**，head实体的开始结束位置，也是左开右闭
+        pos2 = [0, 0]  # 用于记录加完tag后，tail实体的开始结束位置
 
         # 用类型标签把实体包起来 [unused1] head [unused3]; [unused2] tail [unused4]
         for cur_pos in range(len(tokens)):
@@ -186,7 +186,7 @@ class Mytokenizer(object):
 def convert_pos_to_mask(e_pos, max_len=128):
     """
     将实体在tokens中的起始范围，变成max_len长度的list，该实体的起止的范围设置为1，其余为0
-    :param pos: [start_pos, end_pos] 左开右闭
+    :param pos: [start_pos, end_pos) 左开右闭
     :param max_len: len(tokens)
     :return: mask_list
     """
@@ -225,7 +225,7 @@ def read_data(data_file_path, not_need_label_file, tokenizer=None, max_len=128):
                     and pos_e2[0] < max_len - 1 and pos_e2[1] < max_len:
                 tokens_list.append(tokens)
                 e1_mask = convert_pos_to_mask(pos_e1)
-                e2_mask = convert_pos_to_mask((pos_e2))
+                e2_mask = convert_pos_to_mask(pos_e2)
                 e1_mask_list.append(e1_mask)
                 e2_mask_list.append(e2_mask)
                 label = item['relation']
@@ -288,6 +288,7 @@ class WikiData(Dataset):
                                                                                         not_need_label_file=not_need_label_file,
                                                                                         tokenizer=self.tokenizer,
                                                                                         max_len=self.max_len)
+        print('样本数: ', len(self.labels))
         self.label2idx = get_label2idx(self.labels_path)
 
     def __len__(self):

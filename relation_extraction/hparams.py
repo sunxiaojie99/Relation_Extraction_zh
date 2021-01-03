@@ -7,8 +7,20 @@ here = os.path.dirname(os.path.abspath(__file__))
 
 default_pretrained_model_path = os.path.join(
     here, '../pretrained_models/chinese-bert-wwm')
-default_train_file = os.path.join(here, '../datasets/wi_train_char.jsonl')
-default_validation_file = os.path.join(here, '../datasets/wi_test_char.jsonl')
+
+# default_train_file = os.path.join(here, '../datasets/wi_train_char.jsonl')
+# default_validation_file = os.path.join(here, '../datasets/wi_test_char.jsonl')
+
+# default_train_file = os.path.join(
+#     here, '../datasets/add_no_train_char_v2_fn.jsonl')
+# default_validation_file = os.path.join(
+#     here, '../datasets/add_no_test_char_v2_fn.jsonl')
+
+default_train_file = os.path.join(
+    here, '../datasets/add_no_train_char_v3_ner_fn.jsonl')
+default_validation_file = os.path.join(
+    here, '../datasets/add_no_test_char_v3_ner_fn.jsonl')
+
 default_output_dir = os.path.join(here, '../saved_models')
 default_log_dir = os.path.join(default_output_dir, 'runs')
 default_label_set_file = os.path.join(here, '../datasets/relation.txt')
