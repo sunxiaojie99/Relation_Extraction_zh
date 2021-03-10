@@ -1,4 +1,5 @@
 # Relation_Extraction_zh
+基于Bert的中文关系抽取项目
 Traditional Bert model was used to extract Chinese relationship
 
 ## Requirements
@@ -12,7 +13,7 @@ tensorboard
 jsonlines
 
 ## The main data source(add some data from wikipedia)
-https://aistudio.baidu.com/aistudio/loginmid?redirectUri=http%3A%2F%2Faistudio.baidu.com%2Faistudio%2Fdatasetdetail%2F27955%3F_%3D1606105736684
+[DUIE](https://aistudio.baidu.com/aistudio/loginmid?redirectUri=http%3A%2F%2Faistudio.baidu.com%2Faistudio%2Fdatasetdetail%2F27955%3F_%3D1606105736684)
 
 ## bert_model
 
@@ -31,6 +32,9 @@ The directory structure
 ```
 
 ## Usage
+
+- 有效文件为：relation_extraction目录，以及训练调用脚本chn_train.py、测试调用脚本chn_test.py
+- do_call.py 使用本模型部署api，可以参考使用~
 
 1. use gpu to train (not add entity tyoe)
 ```
